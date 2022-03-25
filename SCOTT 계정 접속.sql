@@ -1,0 +1,235 @@
+--DROP TABLE EMP;
+--DROP TABLE DEPT;
+--DROP TABLE LOCATIONS;
+--DROP TABLE SALGRADE;
+
+-- ctrl+enter 조작시, 값이 실행되며, ;(세미콜론)은 문장이 끝났다는 뜻이다.
+CREATE TABLE DEPT(
+    DEPTNO NUMBER(2) CONSTRAINT PK_DEPT PRIMARY KEY,
+	DNAME VARCHAR2(14) ,
+	LOC VARCHAR2(13) 
+); 
+
+CREATE TABLE EMP(
+    EMPNO NUMBER(4) CONSTRAINT PK_EMP PRIMARY KEY,
+	ENAME VARCHAR2(10),
+	JOB VARCHAR2(9),
+	MGR NUMBER(4),
+	HIREDATE DATE,
+	SAL NUMBER(7,2),
+	COMM NUMBER(7,2),
+	DEPTNO NUMBER(2) CONSTRAINT FK_DEPTNO REFERENCES DEPT
+);
+
+CREATE TABLE SALGRADE( 
+    GRADE NUMBER,
+	LOSAL NUMBER,
+	HISAL NUMBER 
+);
+CREATE TABLE LOCATIONS (
+     LOC_CODE  CHAR(2) ,
+     CITY      VARCHAR2(12)
+) ;
+
+-- DEPT에 Insert문을 이용해 값 저장
+INSERT INTO DEPT VALUES(10,'ACCOUNTING','NEW YORK');
+INSERT INTO DEPT VALUES(20,'RESEARCH','DALLAS');
+INSERT INTO DEPT VALUES(30,'SALES','CHICAGO');
+INSERT INTO DEPT VALUES(40,'OPERATIONS','BOSTON');
+
+-- EMP에 Insert문을 이용해 값 저장
+INSERT INTO EMP VALUES
+(7369,'SMITH','CLERK',7902,to_date('17-12-1980','dd-mm-yyyy'),800,NULL,20);
+INSERT INTO EMP VALUES
+(7499,'ALLEN','SALESMAN',7698,to_date('20-2-1981','dd-mm-yyyy'),1600,300,30);
+INSERT INTO EMP VALUES
+(7521,'WARD','SALESMAN',7698,to_date('22-2-1981','dd-mm-yyyy'),1250,500,30);
+INSERT INTO EMP VALUES
+(7566,'JONES','MANAGER',7839,to_date('2-4-1981','dd-mm-yyyy'),2975,NULL,20);
+INSERT INTO EMP VALUES
+(7654,'MARTIN','SALESMAN',7698,to_date('28-9-1981','dd-mm-yyyy'),1250,1400,30);
+INSERT INTO EMP VALUES
+(7698,'BLAKE','MANAGER',7839,to_date('1-5-1981','dd-mm-yyyy'),2850,NULL,30);
+INSERT INTO EMP VALUES
+(7782,'CLARK','MANAGER',7839,to_date('9-6-1981','dd-mm-yyyy'),2450,NULL,10);
+INSERT INTO EMP VALUES
+(7788,'SCOTT','ANALYST',7566,to_date('09-12-1982','dd-mm-yyyy'),3000,NULL,20);
+INSERT INTO EMP VALUES
+(7839,'KING','PRESIDENT',NULL,to_date('17-11-1981','dd-mm-yyyy'),5000,NULL,10);
+INSERT INTO EMP VALUES
+(7844,'TURNER','SALESMAN',7698,to_date('8-9-1981','dd-mm-yyyy'),1500,0,30);
+INSERT INTO EMP VALUES
+(7876,'ADAMS','CLERK',7788,to_date('12-1-1983','dd-mm-yyyy'),1100,NULL,20);
+INSERT INTO EMP VALUES
+(7900,'JAMES','CLERK',7698,to_date('3-12-1981','dd-mm-yyyy'),950,NULL,30);
+INSERT INTO EMP VALUES
+(7902,'FORD','ANALYST',7566,to_date('3-12-1981','dd-mm-yyyy'),3000,NULL,20);
+INSERT INTO EMP VALUES
+(7934,'MILLER','CLERK',7782,to_date('23-1-1982','dd-mm-yyyy'),1300,NULL,10);
+
+-- SALGRADE에 insert를 이용해 값 저장
+INSERT INTO SALGRADE VALUES (1,700,1200);
+INSERT INTO SALGRADE VALUES (2,1201,1400);
+INSERT INTO SALGRADE VALUES (3,1401,2000);
+INSERT INTO SALGRADE VALUES (4,2001,3000);
+INSERT INTO SALGRADE VALUES (5,3001,9999);
+
+--commit : 현재까지 한 내용을 DB에 보냄
+--현재까지의 내용을 확정함 -> 저장
+commit;
+
+--EMP의 전체 값을 조회
+--아래 두 실행문을 같은 값을 출력한다.
+SELECT * FROM EMP;
+SELECT EMPNO, ENAME, JOB, MGR, HIREDATE, SAL, COMM, DEPTO FROM EMP;
+
+SELECT * FROM DEPT;
+
+SELECT EMPNO, ENAME, SAL, COMM FROM EMP;
+
+--순서 변경 가능
+SELECT JOB, MGR, HIREDATE, SAL, COMM, DEPTNO, EMPTNO FROM EMP;
+
+SELECT EMPNO, ENAME, SAL, SAL+300 FROM EMP;
+SELECT EMPNO, ENAME, SAL, 2*SAL+300 FROM EMP;
+SELECT EMPNO, ENAME, SAL, 2*(SAL+300) FROM EMP;
+
+--NULL+300 = NULL이다.(NULL에 어떤 계산을 해도 NULL이 반환된다.)
+--COMM+300에서 COMM값이 NULL값이면 그 결과도 NULL이 된다.
+SELECT EMPNO, ENAME, SAL, COMM, COMM+300 FROM EMP;
+
+--SELECT절과 FROMW절을 각 행에 나누어 작성하기도 한다.
+--ENAME의 별명 NAME을 부여, SAL*12의 별명 Annual Salary(연봉)를 부여
+--SELECT시, 위 속성명이 NAME, SAL, Annual Salary로 변경되어 보여짐
+SELECT ENAME AS NAME, SAL, SAL*12 AS "Annual Salary" 
+FROM EMP;
+
+--Literal 문자열 실습
+--결과1, 결과2, 결과3, 결과4는 별칭을 부여한것
+select ename 결과1, 'ABCde' 결과2, sal 결과3, 500 결과4 
+from emp;
+
+--연결연산자
+--별칭으로 이름_번호_직업을 생성
+SELECT ENAME || ':' || EMPNO || ':' || JOB 이름_번호_직업
+FROM EMP;
+
+--예제2. emp테이블에서 이름과 업무를 King is a PRESIDENT 형태로 출력
+SELECT ENAME || ' is a '|| JOB AS "Employees Details"
+FROM EMP;
+
+--예제3.  emp테이블에서 일므과 연봉을 KING : 1 Year salary = 60000형태로 조회
+-- SAL*12는 월급을 12(1년)으로 곱해 연봉을 나타낸 것이다.
+SELECT ENAME || ' : 1 Year salart = ' || 12*SAL MONTHLY 
+FROM EMP;
+
+--ALL*  = * 
+--ALL이 생략되어 두 연산자가 같은 값이 나온다.
+SELECT ALL * FROM EMP;
+SELECT * FROM EMP;
+
+--JOB 컬럼을 가지고 중복 제거
+SELECT DISTINCT JOB
+FROM EMP;
+
+--DEPTNO(부서번호)와 JOB 컬럼의 값이 중복되지 않게 출력
+SELECT DISTINCT DEPTNO, JOB
+FROM EMP;
+
+--
+SELECT ROWID, ROWNUM, ENAME, SAL
+FROM EMP
+WHERE ROWNUM <= 3;
+
+SELECT * FROM EMP;
+
+--WHERE문, JOB이 MANAGER인것의 EMPNO, ENAME, JOB, SAL 컬럼 조회
+--한줄씩 읽으며, 해당 조건이 만족하면 출력되는것
+--한줄씩 읽음 -> WHERE절 체크 -> SELECT문 출력
+SELECT EMPNO, ENAME, JOB, SAL
+FROM EMP
+WHERE JOB = 'MANAGER';
+
+--값이 없음 (명령문이 아닌, 실제 데이터는 대소문자를 확인하여 조회해야한다.
+--MANAGER은 있지만, Manager은 없는것
+--대부분의 실제 데이터는 대문자로 저장되어 있다.
+SELECT EMPNO, ENAME, JOB, SAL
+FROM EMP
+WHERE JOB = 'Manager';
+
+--예제2. 급여가 3000이상인 사원의 사원번호, 이름, 담당업무, 급여를 조회
+--항상 문장 끝에는 세미콜론을 찍어야한다.
+SELECT EMPNO, ENAME, JOB, SAL 
+FROM EMP
+WHERE SAL >= 3000;
+
+--예제3. 부서번호가 30이 아닌 사원들의 이름, 급여, 부서번호를 조회
+--같지 않다 : !=, <>, ^=
+SELECT ENAME, SAL, DEPTNO
+FROM EMP
+WHERE DEPTNO<>30;
+
+--비교 연산자
+
+--예제1. 급여가 1300에서 1700사이(1300이상 1700이하)
+--WHERE SAL >= 1300 AND SAL <= 1700
+SELECT ENAME, JOB, SAL, DEPTNO
+FROM EMP
+WHERE SAL BETWEEN 1300 AND 1700;
+
+--예제2
+--위치를 바꾸면 값이 없다
+--WHERE SAL >= 1700 AND SAL <= 1300과 같기 때문(성립할 수 없는 식)
+SELECT ENAME, JOB, SAL, DEPTNO
+FROM EMP
+WHERE SAL BETWEEN 1700 AND 1300;
+
+--예제3. 사원번호가 7902, 7788, 7566인 사원의 사원번호, 성명, 담당업무, 급여, 입사일자 조회
+--IN은 값이 하나라도 포함되면 출력함
+--IN(7902, 7788, 7566)는 EMP테이블에 이쓴 데이터중에서 EMPNO값이 존재할 경우 TRUE값이 RETURN된다.
+SELECT EMPNO, ENAME, JOB, SAL, HIREDATE
+FROM EMP
+WHERE EMPNO IN (7902, 7788, 7566);
+
+--위와 같은 결과가 출력된다.
+SELECT EMPNO, ENAME, JOB, SAL, HIREDATE
+FROM EMP
+WHERE EMPNO = 7902 OR EMPNO = 7788 OR EMPNO = 7566;
+
+--예제4. EMP테이블에서 이름의 두번째 글자가 'A'인 사원이름, 급여, 업무 조회
+--WIDECARD인 _(한글자), %(0개이상)을 이용하여 'A'조회
+SELECT ENAME, SAL, JOB
+FROM EMP
+WHERE ENAME LIKE '_A%';
+
+--예제5. EMP 테이블에서 이름에 'A'문자가 포함된 사원이름, 급여, 업무 조회
+--%는 0개도 포함하므로 %를 사용하여 작성한다.
+SELECT ENAME, SAL, JOB
+FROM EMP
+WHERE ENAME LIKE '%A%';
+
+--예제7
+--ESCAPE뒤에 오는 %는 WILDCARD의 기능을 갖지 않는다.
+--이름에 %가 포함된 사원 정보 출력
+SELECT * FROM EMP
+WHERE ENAME LIKE '%#%%';
+
+--예제8
+--결과 없음(COMM==NULL인 결과는 NULL)
+SELECT EMPNO, ENAME, JOB, SAL, COMM, DEPTNO
+FROM EMP 
+WHERE COMM = NULL;
+
+--NULL은 아무리 연산해도 NULL밖에 안나옴
+SELECT EMPNO, ENAME, JOB, SAL, COMM, DEPTNO
+FROM EMP 
+WHERE COMM < NULL;
+
+--그래서 아래와 같이 작성해야 NULL인지 확인할 수 있다.
+--COMM에 있는 데이터가 NULL이면 TRUE값이 RETURN -> 값이 출력됨
+SELECT EMPNO, ENAME, JOB, SAL, COMM, DEPTNO
+FROM EMP 
+WHERE COMM IS NULL;
+
+
+
