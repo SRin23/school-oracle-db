@@ -297,7 +297,8 @@ SELECT EMPNO, ENAME, JOB, SAL
 FROM EMP
 WHERE SAL > 1500 AND JOB IN('PRESIDENT', 'SALESMAN');
 
---ORDER BY
+--ORDER BY(43p)
+--예제1
 --날짜는 과거가 큰값이다.(과거->현재->미래)
 --과거 날짜부터 - 오름차순(기본값)
 SELECT EMPNO, ENAME, JOB, SAL, HIREDATE, DEPTNO
@@ -309,7 +310,162 @@ SELECT EMPNO, ENAME, JOB, SAL, HIREDATE, DEPTNO
 FROM EMP
 ORDER BY HIREDATE DESC;
 
+--예제2
 --부서번호로 오름차순 정렬 후, 부서번호가 같으면 급여가 많은 순으로 정렬(내림차순)
 SELECT EMPNO, ENAME, JOB, DEPTNO, SAL
 FROM EMP
 ORDER BY DEPTNO ASC, SAL DESC;
+
+--예제3
+--empno : 1 / ename : 2 / job : 3 / sal : 4 / deptno : 5 / hiredate : 6 -> 각 컬럼은 순서대로 번호를 가짐
+-- 즉, sal을 기준으로 오름차순 정렬
+select empno, ename, job, sal, deptno, hiredate
+from emp
+order by 4;
+
+--deptno을 기준으로 오름차순 정렬 후, 같은 값은 sal의 내림차순으로 정렬
+select empno, ename, job, deptno, sal, hiredate
+from emp
+order by 4, 5 desc;
+
+--예제4
+--SAL을 12번 곱한 연봉의 별명을 ANN_SAL로 하여
+--ANN_SAL을 기준으로 하여 오름차순 정렬
+SELECT ENAME, SAL, SAL*12 ANN_SAL
+FROM EMP
+ORDER BY ANN_SAL;
+--ORDER BY SAL*12;
+
+--예제 5(47P)
+--부서별로 담당하는 업무를 한번씩 조회하라 단, 업무기준으로 정렬
+--DISTINCT : 데이터 중복을 제거한다.
+SELECT DISTINCT DEPTNO, JOB
+FROM EMP
+ORDER BY JOB;
+
+--예제6) 다음 문장을 수행한 결과는? -> ERROR 발생
+--DISTINCT를 사용할 경우에는 SELECT절에 있는 컬럼만 정렬에 사용할 수 있다.
+--DISTINCT를 사용하지 않으면 EMP테이블에 있는 모든 컬럼을 정렬 기준으로 사용할 수 있다.
+SELECT DISTINCT DEPTNO, JOB
+FROM EMP
+ORDER BY SAL;
+
+--예제 7) 다음 문장을 수행한 결과는? -> SAL+COMM을 기준으로 오름차순 정렬되어 나타남
+SELECT DISTINCT JOB, SAL+COMM
+FROM EMP
+ORDER BY 2; --2는 SAL+COMM 을 일겉는다.
+
+
+
+
+
+--03. 단일 행 함수
+--예제1(55p) 전체 소문자(LOWER), 첫글자만 대문자(INITCAP)
+SELECT EMPNO, ENAME, LOWER(JOB), INITCAP(JOB)
+FROM EMP
+WHERE DEPTNO=10;
+
+--예제2(56p)
+--CONCAT(A, B)는 A와 B를 연결해서 하나의 컬럼을 만든다.
+SELECT EMPNO, ENAME, JOB, 
+CONCAT(EMPNO, ENAME) E_ENAME, 
+CONCAT(ENAME, EMPNO) E_EMPNO,
+CONCAT(ENAME, JOB) E_JOB
+FROM EMP
+WHERE DEPTNO=10;
+
+--예제3)EMP테이블에서 이름의 첫글자가 'K'보다 크고 'Y'보다 작은 사원의 정보를 이름순으로 정렬하여 출력
+-- SUBSTR(문자열, 위치, 개수)로 하여 문자열의 원하는 값을 잘라낼 수 있다.
+--ENAME의 값에서 첫번째 문자 1개를 반환한다.
+SELECT EMPNO, ENAME, JOB, SAL, DEPTNO
+FROM EMP
+WHERE SUBSTR(ENAME, 1, 1)>'K' AND SUBSTR(ENAME, 1, 1)<'Y'
+ORDER BY ENAME;
+
+--예제4) 부서가 20인 사원의 정보조회
+--LENGTH는 해당 데이터의 길이를 출력한다.
+SELECT EMPNO, ENAME, LENGTH(ENAME), SAL, LENGTH(SAL)
+FROM EMP
+WHERE DEPTNO=20;
+
+--예제5(57p)
+SELECT ENAME, 
+INSTR(ENAME, 'L') E_NULL,  --ENAME중 'L'의 위치 출력 -> POSITION과 개수 생략(1, 1)로
+INSTR(ENAME, 'L', 1, 1) E_11,   --ENAME의 처음부터 시작해 'L'의 첫번째 위치 출력
+INSTR(ENAME, 'L', 1, 2) E_12, --ENAME의 처음부터 시작해 'L'의 두번째 위치 출력
+INSTR(ENAME, 'L', 4, 1) E_41 --ENAME의 4번째부터 시작(MILLER -> LER)해 'L'의 첫번째 위치 출력 
+FROM EMP
+ORDER BY ENAME; 
+
+--※참고) 한글 1글자 : 3byte
+--출력 : NUL_CHARACTERSET / AL32UTF8
+SELECT PARAMETER, VALUE
+FROM NLS_DATABASE_PARAMETERS
+WHERE PARAMETER = 'NLS_CHARACTERSET';
+
+--예제6)
+--DUAL은 ORACLE에서 제공하는 가상테이블이다.
+--영문자는 1글자를 1BYTE로 인식하기 때문에 5는 문자열의 5번째 위치와 같다.
+--SUBSTR은 문장의 5번째 문자에서 시작해 3개를 잘라온다.
+--SUBSTRB는 BYTE 5번째 BYTE에서 3BYTE만큼 잘라온다(참고, 한글은 1글자당 3BYTE이므로 한글자만 출력)
+SELECT 
+SUBSTRB('I am here with you', 5, 3) 결과1,    -- _he(앞에 띄워쓰기가 된것) -> 영어는 SUBSTRB에 영향 크게 받지 않는다.(1글자당 1BYTE)
+SUBSTR('나 여기 있어', 5, 3) 결과2,    -- _있어
+SUBSTRB('나 여기 있어', 5, 3) 결과3,   --
+SUBSTRB('나 여기 있어', 5, 4) 결과4,
+SUBSTRB('나 여기 있어', 5, 5) 결과5,   -- 3BYTE를 다 채우지 못해 '기'가 출력되지 않음
+SUBSTRB('나 여기 있어', 5, 6) 결과6    
+FROM DUAL;
+
+--예제7
+--부서번호가 10인 사원의 이름출력
+SELECT ENAME,
+    SUBSTR(ENAME, 1, 3),    --1번째 위치부터 3개 출력
+    SUBSTR(ENAME, 3), --3번째 위치부터 끝까지 출력
+    SUBSTR(ENAME, -3, 2)    --오른쪽에서 3번째 위치부터 2개출력
+FROM EMP
+WHERE DEPTNO=10;
+
+--예제1(59p)
+SELECT 
+ENAME, LPAD(ENAME, 15, '*'), --15자리의 문자열을 만들어 왼쪽의 빈 공간은 *로 채워 반환
+SAL, 
+LPAD(SAL, 10, '$') --10자리의 문자열을 만들어 왼쪽의 빈 공간은 $로 채워 반환
+FROM EMP
+WHERE DEPTNO = 10;
+
+--예제2
+SELECT 
+ENAME, RPAD(ENAME, 15, '*'), --15자리의 문자열을 만들어 오른쪽의 빈 공간은 *로 채워 반환
+SAL, 
+RPAD(SAL, 10, '$') --10자리의 문자열을 만들어 오른쪽의 빈 공간은 $로 채워 반환
+FROM EMP
+WHERE DEPTNO = 10;
+
+
+--예제3(60P)
+--20번 부서의 사원에 대하여 담당업무 중 가장 좌측에 'A'를 삭제하고, 급여중 가장 좌측의 값이 '1'이면 '1'을 삭제하여 출력
+--연속적으로 삭제할 값이 좌측에 있는 경우 그 값을 모두 삭제한다.
+SELECT ENAME, JOB, LTRIM(JOB, 'A'), SAL, LTRIM(SAL, 1)
+FROM EMP
+WHERE DEPTNO = 20;
+
+--예제4) 
+SELECT ENAME, JOB, RTRIM(JOB, 'T'), SAL, RTRIM(SAL, 0)
+FROM EMP
+WHERE DEPTNO = 10;
+
+--예제5)
+--ENAME중 'SC'문자열을 '*?'로 변환하여 출력
+SELECT ENAME, REPLACE(ENAME, 'SC', '*?') 변경결과1
+FROM EMP
+WHERE DEPTNO = 20;
+
+--예제6(61p)
+--TRANSLATE(ENAME, 'SC', '*?') -> 연속하지 않아도, S는 *로, C는 ?로 변환하여 반환한다.
+--즉, 1:1로 변환하여 반환한다.
+--TRANSLATE(ENAME, 'SC', '*') 이렇게 작성시, C위치의 값은 사라지게 된다. EX. SCOTT -> *OTT
+--TRANSLATE(ENAME, 'SC', '')이렇게 작성시, 일대일로 대응되지 않으므로 NULL로 변환된다.
+SELECT ENAME, TRANSLATE(ENAME, 'SC', '*?') 변경결과2
+FROM EMP
+WHERE DEPTNO = 20;
