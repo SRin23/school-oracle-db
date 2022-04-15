@@ -648,7 +648,7 @@ FROM DUAL;
 
 --예제 6
 SELECT HIREDATE, 
-    ROUND(HIREDATE, 'MONTH') ,  --입사일자의 '일'을 기준(15일)으로 다음달 혹은 이번달 1일이 출력
+    ROUND(HIREDATE, 'MONTH') ,  --입사일자의 '일'을 기준(15일)으로 다음달(16이후) 혹은 이번달(15이전) 1일이 출력
     ROUND(HIREDATE, 'YEAR') --입사일자의 '월'을 기준(6월)으로 다음연도 혹은 이번연도의 1월 1일이 출력 
 FROM EMP
 WHERE DEPTNO = 20;

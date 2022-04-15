@@ -1,0 +1,6 @@
+create user mirimtest identified by mirim123;
+GRANT CONNECT, RESOURCE to mirimtest;
+-- SQLDEVELOPER를 이용해 계정을 생성하려면 서버계정에 접속하여 계정을 생성해야한다.
+
+COMMIT
+--COMMIT을 실행해야 저장됨
