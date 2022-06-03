@@ -1137,3 +1137,140 @@ FROM EMP
 GROUP BY DEPTNO -- 부서번호를 기준으로 GROUP 설정
 HAVING MIN(SAL) > (SELECT MIN(SAL) FROM EMP WHERE DEPTNO = 20); --20번 부서의 최소 급여를 출력하는 문장
 --20번 부서의 최솟값보다는 큰 부서의 최소값들을 출력
+
+
+-- 다중행 서브쿼리
+-- 예제1
+--에러 : SAL값은 한개만 받을 수 있다.
+-- 서브쿼리의 결과값은 3개인데 SAL은 한개만 받을 수 있어 에러 발생
+SELECT EMPNO, ENAME, SAL, DEPTNO 
+FROM EMP
+WHERE SAL = (SELECT MAX(SAL) FROM EMP GROUP BY DEPTNO);
+
+--IN 사용
+SELECT EMPNO, ENAME, SAL, DEPTNO 
+FROM EMP
+WHERE SAL IN (SELECT MAX(SAL) FROM EMP GROUP BY DEPTNO);
+-- SAL은 부서별(10, 20, 30)의 최대값과 비교하여 1개라도 만족하면 TRUE를 반환한다.
+
+-- 예제2-1
+SELECT ENAME, SAL, JOB 
+FROM EMP
+WHERE JOB != 'SALESMAN'
+AND SAL > ANY(SELECT SAL FROM EMP WHERE JOB = 'SALESMAN');
+--SAL>ANY의 의미는 서브쿼리의 결과값 중에서 제일 작은 값보다 크면 true 발생
+--ANY의 의미는 최소값보다 크면
+
+-- 예제2-2
+SELECT ENAME, SAL, JOB 
+FROM EMP
+WHERE JOB != 'SALESMAN'
+AND SAL > ANY(SELECT SAL FROM EMP WHERE JOB = 'SALESMAN');
+
+-- 예제 2-3
+SELECT ENAME, SAL, JOB 
+FROM EMP
+WHERE JOB != 'SALESMAN'
+AND SAL < ANY(SELECT MIN(SAL) FROM EMP WHERE JOB = 'SALESMAN');
+-- SAL< ANY의 의미는 서브쿼리의 결과값 중에서 제일 큰 (1600) 값보다 작으면 TRUE 발생
+
+--예제 2-4
+SELECT ENAME, SAL, JOB FROM EMP
+WHERE JOB != 'SALESMAN'
+AND SAL < (SELECT MAX(SAL) FROM EMP WHERE JOB = 'SALESMAN'); --SAL값은 1600
+
+--예제3
+SELECT ENAME, SAL, JOB, HIREDATE, DEPTNO
+FROM EMP
+WHERE JOB!='SALESMAN'
+AND SAL > ALL(SELECT SAL FROM EMP WHERE JOB = 'SALESMAN');
+--서브쿼리의 SAL값을 (1600, 1250. 1500)보다 큰 값을 출력
+--서브쿼리의 최대값(1600)보다 큰 값을 출력
+
+--예제3-1
+SELECT ENAME, SAL, JOB, HIREDATE, DEPTNO
+FROM EMP
+WHERE JOB!='SALESMAN'
+AND SAL > (SELECT MAX(SAL) FROM EMP WHERE JOB = 'SALESMAN'); ---1600
+
+
+-- 예제 3-2
+SELECT ENAME, SAL, JOB, HIREDATE, DEPTNO
+FROM EMP
+WHERE JOB!='SALESMAN'
+AND SAL < ALL(SELECT SAL FROM EMP WHERE JOB = 'SALESMAN');
+-- 서브쿼리의 SAL값들(1600, 1250, 1500)보다 작은 값을 출력
+
+--예제 3-3
+
+SELECT ENAME, SAL, JOB, HIREDATE, DEPTNO
+FROM EMP
+WHERE JOB!='SALESMAN'
+AND SAL < (SELECT MIN(SAL) 
+                    FROM EMP 
+                    WHERE JOB = 'SALESMAN');
+                    
+--다중 열 서브쿼리
+--예제1
+--논리적인 오류를 발생시킨다.
+SELECT ENAME, MGR, DEPTNO
+FROM EMP
+WHERE MGR  IN (SELECT MGR FROM EMP WHERE ENAME IN ('FORD', 'BLAKE'))
+AND DEPTNO IN(SELECT DEPTNO FROM EMP WHERE ENAME IN ('FORD', 'BLAKE'))
+AND ENAME NOT IN('FORD', 'BLAKE');
+  
+SELECT ENAME, MGR, DEPTNO
+FROM EMP
+WHERE MGR IN (7839, 7566)
+AND DEPTNO IN(30, 20)
+AND ENAME NOT IN('FORD', 'BLAKE');
+                                      
+SELECT ENAME, MGR, DEPTNO
+FROM EMP
+WHERE ENAME='FORD'; --7566 20
+
+SELECT ENAME, MGR, DEPTNO
+FROM EMP
+WHERE ENAME='BLAKE'; --7839 30
+
+--예제2
+SELECT ENAME, MGR, DEPTNO
+FROM EMP
+WHERE(MGR, DEPTNO) IN (SELECT MGR, DEPTNO 
+                                        FROM EMP
+                                        WHERE ENAME IN ('FORD', 'BLAKE'))
+AND ENAME NOT IN ('FORD', 'BLAKE');  
+-- 'FORD'값에서 MGR : 7566, DEPTNO:20인 다른 사원들을 출력   
+-- 'BLAKE'값에서 MGR : 7839, DEPTNO:30인 다른 사원들을 출력   
+
+SELECT ENAME, MGR, DEPTNO
+FROM EMP
+WHERE (MGR, DEPTNO) IN ((7839, 30), (7566, 20))
+AND ENAME NOT IN('FORD', 'BLAKE');
+
+--상호연관 서브쿼리
+--예제1
+--소속 부서의 평균 급여보다 많은 급여를 받는 사원을 조회
+--메인쿼리 한번실행할때마다 서브쿼리는 각각 14번씩 실행된다
+SELECT ENAME, SAL, DEPTNO, HIREDATE, JOB
+FROM EMP E  --별칭 써주기
+WHERE SAL > (SELECT AVG(SAL) FROM EMP WHERE DEPTNO=E.DEPTNO);
+--1) 메인쿼리에서 EMP테이블의 한행을 읽어서 E.DEPTNO값을 서브 쿼리로 전달
+--2) 서브쿼리는 메인쿼리에서 받은 부서번호로 평균 급여를 계산
+--3) 다시 메인쿼리는 서브쿼리의 평균급여보다 큰 값이면 직원들을 출력한다.
+--4) 1~3과정을 14번 반복한다. (EMP테이블 행의 개수가 14개 이므로)
+-- 이중 FOR문과 똑같은 구조가 된다
+
+SELECT DEPTNO, ROUND(AVG(SAL))
+FROM EMP
+GROUP BY DEPTNO
+ORDER BY DEPTNO;
+
+
+--FROM절 서브쿼리
+--예제1
+SELECT E.EMPNO, E.ENAME, E.DEPTNO, D.DNAME, D.LOC_CODE
+FROM (SELECT * FROM EMP WHERE DEPTNO = 10) E, --부서번호가 10번인 사원들의 가상 테이블의 별칭을 E라고 할당
+            (SELECT * FROM DEPT) D  --DEPT테이블의 모든 값을 가진 테이블의 별칭을 D라고 할당
+WHERE E.DEPTNO = D.DEPTNO;    -- DEPTNO가 같을 경우(EQJOIN)에만 출력
+--상호 연관서브쿼리로 변경가능한 경우에도 INLINE VIEW가 성능이 더 좋다.
