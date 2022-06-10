@@ -1274,3 +1274,97 @@ FROM (SELECT * FROM EMP WHERE DEPTNO = 10) E, --부서번호가 10번인 사원�
             (SELECT * FROM DEPT) D  --DEPT테이블의 모든 값을 가진 테이블의 별칭을 D라고 할당
 WHERE E.DEPTNO = D.DEPTNO;    -- DEPTNO가 같을 경우(EQJOIN)에만 출력
 --상호 연관서브쿼리로 변경가능한 경우에도 INLINE VIEW가 성능이 더 좋다.
+
+
+--TOP-N 서브쿼리
+--예제1
+SELECT ROWNUM, EMPNO, ENAME, SAL
+FROM EMP   
+ORDER BY SAL DESC;  
+--ORDER BY가 가장 마지막에 실행되므로 예상했던 결과가 아닌, ROWNUM이 섞여 나오게 된다.
+--FROM절 EMP테이블의 내용을 한 행씩 읽어서 ROWNUM값을 1부터 시작하여 1씩 증가된 값이 부여된다.
+--FROM절의 emp테이블의 내용을 반복해서(14번) 읽을때 1증가된 값을 부여
+
+SELECT ROWNUM, EMPNO, ENAME, SAL
+FROM EMP   
+WHERE ROWNUM < 6
+ORDER BY SAL DESC;  
+--FROM절의 EMP테이블의 내용을 한 행씩 읽어서 ROWNUM값은 1을 부여하고 WHERE절에서 조건이 참이면,
+--FROM절의 EMP 테이블의 그 다음 행을 읽어서 1증가된 값을 부여
+
+SELECT ROWNUM, EMPNO, ENAME, SAL
+FROM EMP   
+WHERE ROWNUM = 2
+ORDER BY SAL DESC;  
+
+SELECT ROWNUM, EMPNO, ENAME, SAL
+FROM (SELECT EMPNO, ENAME, SAL FROM EMP ORDER BY SAL DESC);
+
+--스칼라 서브쿼리
+SELECT EMPNO, ENAME, 
+                        (CASE WHEN DEPTNO = (SELECT DEPTNO FROM DEPT
+                                                                        WHERE LOC_CODE = 'B1')
+                                                                        THEN 'TOP' ELSE 'BRENCH' END) AS LOCATION
+FROM EMP;
+-- SELECT 절의 서브 쿼리는 EMP테이블의 부서번호와 DEPT테이블의 LOC_CODE가 'B1'인
+-- 부서번호가 같을 경우 'TOP'출력, 다르면 'BRENCH' 출력
+
+--예제2
+SELECT ENAME, DEPTNO, SAL,
+        (SELECT ROUND(AVG(SAL)) FROM EMP WHERE DEPTNO = E.DEPTNO) AS ASAL
+FROM EMP E;
+
+--예제3
+SELECT EMPNO, ENAME, DEPTNO, HIREDATE
+FROM EMP E
+ORDER BY (SELECT DNAME FROM DEPT WHERE DEPTNO = E.DEPTNO) DESC;
+
+-- EXISTS 연산자
+-- 예제1
+SELECT DEPTNO, DNAME
+FROM DEPT D
+WHERE EXISTS (SELECT 'A' 
+                            FROM EMP
+                            WHERE DEPTNO=D.DEPTNO);
+-- DEPT테이블의 한행을 읽고, EXISTS절의 서브 쿼리에서 DEPT테이블의 DEPTNO값과 
+-- EMP테이블의 DEPTNO값을 비교하여
+-- 비교하는 중간에 값이 같을 경우에는 EMP테이블의 나머지 값을 읽지 않음
+
+-- DEPT테이블의 DEPTNO값과 EMP테이블의 DEPTNO값이 같은 경우가 없을 경우에는 FALSE가 반환된다.
+
+--위의 결과와 같음                    
+SELECT DEPTNO, DNAME
+FROM DEPT D
+WHERE EXISTS (SELECT 1 
+                            FROM EMP
+                            WHERE DEPTNO=D.DEPTNO);
+
+--예제2
+SELECT DEPTNO, DNAME
+FROM DEPT D
+WHERE NOT EXISTS (SELECT 'A' 
+                            FROM EMP
+                            WHERE DEPTNO=D.DEPTNO);
+-- DEPT테이블의 한행을 읽고, EXISTS절의 서브 쿼리에서 DEPT테이블의 DEPTNO값과 
+-- EMP테이블의 DEPTNO값을 비교하여
+-- 비교하는 중간에 값이 같지 않을 경우에는 EMP테이블의 나머지 값을 읽지 않음
+-- 같은 값이 없어야 TRUE가 반환된다.
+
+--WITH 구문
+--예제1
+SELECT DEPTNO, SUM(SAL)
+FROM EMP
+GROUP BY DEPTNO
+HAVING SUM(SAL) > (SELECT AVG(SUM(SAL))
+                                FROM EMP
+                                GROUP BY DEPTNO);
+
+--예제2
+--서브쿼리의 이름을 ABC라고 정의
+--이것의 결과를 임시 테이블 스페이스에 저장한다.
+--ABC가 서브쿼리로 변환되는것이 아니고 ABC자리에 서브쿼리의 결과값을 가지고 나머지 쿼리를 실행한다.
+WITH ABC AS (SELECT deptno, SUM(sal) as SUM FROM EMP GROUP BY DEPTNO)
+SELECT * FROM ABC
+WHERE sum > (SELECT avg(sum) FROM ABC);
+
+
